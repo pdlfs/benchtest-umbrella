@@ -1,0 +1,191 @@
+#!/usr/bin/env perl
+# $cmuPDL: remrun,v 1.13 2020/07/24 16:46:56 chuck Exp $
+#
+# The Self-* Storage System Project
+# Copyright (c) 2004, Carnegie Mellon University.
+# All rights reserved.
+# http://www.pdl.cmu.edu/  (Parallel Data Lab at Carnegie Mellon)
+#
+# This software is being provided by the copyright holders under the
+# following license. By obtaining, using and/or copying this software,
+# you agree that you have read, understood, and will comply with the
+# following terms and conditions:
+#
+# Permission to reproduce, use, and prepare derivative works of this
+# software is granted provided the copyright and "No Warranty" statements
+# are included with all reproductions and derivative works and associated
+# documentation. This software may also be redistributed without charge
+# provided that the copyright and "No Warranty" statements are included
+# in all redistributions.
+#
+# NO WARRANTY. THIS SOFTWARE IS FURNISHED ON AN "AS IS" BASIS.
+# CARNEGIE MELLON UNIVERSITY MAKES NO WARRANTIES OF ANY KIND, EITHER
+# EXPRESSED OR IMPLIED AS TO THE MATTER INCLUDING, BUT NOT LIMITED
+# TO: WARRANTY OF FITNESS FOR PURPOSE OR MERCHANTABILITY, EXCLUSIVITY
+# OF RESULTS OR RESULTS OBTAINED FROM USE OF THIS SOFTWARE. CARNEGIE
+# MELLON UNIVERSITY DOES NOT MAKE ANY WARRANTY OF ANY KIND WITH RESPECT
+# TO FREEDOM FROM PATENT, TRADEMARK, OR COPYRIGHT INFRINGEMENT.
+# COPYRIGHT HOLDERS WILL BEAR NO LIABILITY FOR ANY USE OF THIS SOFTWARE
+# OR DOCUMENTATION.
+
+# remrun  remote program run, load environment first
+#
+# an EOF from the client (stdin) or the program (e.g. it exits) causes
+# us to shut everything down.
+#
+
+use strict;
+use Config;
+use Getopt::Long qw(:config require_order);
+use IPC::Open2;
+use POSIX ":sys_wait_h";                        # for WNOHANG
+$| = 1;
+
+#
+# vars
+#
+my($idkill, $noenviron, $termtime, $printstdout, $verbose, $rv, $exit_val);
+my(@signame, @vals, $k, $v, $pid, $rd, $wr, $mypgrp);
+my($master_eof, $master_timeout, $rin, $rout, $to, $nfound, $dat, $waitrv, $s);
+
+#
+# default flag values
+#
+$idkill = undef;                                # kill by pid rather than pgrp
+$noenviron = "";                                # always getenv
+$termtime = 10;                                 # 10 sec default
+$printstdout = "";                              # don't print it by default
+$verbose = "";                                  # print out status as we run
+
+$rv = GetOptions(
+                 'i|idkill'           => \$idkill,
+                 'n|noenvironment'    => \$noenviron,
+                 'p|printstdout'      => \$printstdout,
+                 't|termtime=i'       => \$termtime,
+                 'v|verbose'          => \$verbose,
+                 );
+
+if ($rv != 1 || $#ARGV < 0) {
+    print "usage: remrun [remrun-flags] command [args...]\n";
+    print "\nremrun flags:\n";
+    print "\t-i / --idkill         kill by pid rather than pgrp\n";
+    print "\t-n / --noenvironment  skip environment import step (GETENV)\n";
+    print "\t-p / --printstdout    print stdout rather than discarding it\n";
+    print "\t-t / --termtime n     sleep time between SIGTERM and KILL\n";
+    print "\t-v / --verbose        print current status\n";
+    exit(1);
+}
+
+$exit_val = 0;                                  # our exit value
+@signame = split(' ', $Config{sig_name});       # signal names
+
+unless ($noenviron) {
+    print "GETENV\n" if ($verbose);
+    while (<STDIN>) {
+        chop;
+        last unless(/=/);
+        @vals = split(/=/);
+        $k = shift(@vals);
+        $v = join('=', @vals);
+        $ENV{$k} = $v;
+    }
+}
+
+$pid = open2($rd, $wr, @ARGV);
+die "open2 failed ($!)" if ($pid < 1);
+$mypgrp = getpgrp(0);
+$master_eof = 0;
+$SIG{PIPE} = 'IGNORE';                          # we handle this ourself
+
+#
+# select on stdin and child output.  if the child exits, then we do
+# too.  if the parent exits, then we kill the child (following the
+# term time), and then exit.
+#
+while (1) {
+    $rin = '';
+    vec($rin, fileno(STDIN), 1) = 1 unless ($master_eof);
+    vec($rin, fileno($rd), 1) = 1;
+    if ($master_eof) {                          # counting down termtime?
+        $to = $master_timeout - time();
+        $to = 0 if ($to < 0);                   # expired?  just poll.
+    } else {
+        undef($to);                             # not in timeout mode
+    }
+    $nfound = select($rout=$rin, undef, undef, $to);
+
+    # first handle any I/O we may have
+    if ($nfound) {
+        # input/eof from master?
+        if (vec($rout, fileno(STDIN), 1)) {
+            $rv = sysread(STDIN, $dat, 4096);
+            if ($rv > 0) {
+                # we don't expect data here, but pass it through.
+                # if we block in this syswrite: too bad.
+                # XXX: we could just as well throw the data away too.
+                syswrite($wr, $dat);            # ignore errors
+            } else {
+                # master EOF (treat -1 as EOF too)
+                $master_eof = 1;
+                close(STDIN);
+                close($wr);
+                print "remrun: master EOF -- killing\n" if ($verbose);
+                $SIG{TERM} = 'IGNORE';
+                if ($idkill) {
+                    kill 'TERM', $pid;          # kill pid only
+                } else {
+                    kill 'TERM', -$mypgrp;      # kill entire process group
+                }
+                $master_timeout = time + $termtime; # set timeout value
+            }
+        }
+
+        # child output (maybe it exited?)
+        if (vec($rout, fileno($rd), 1)) {
+            $rv = sysread($rd, $dat, 4096);
+            print $dat if ($printstdout && $rv > 0);
+            if ($rv < 1) {
+                print "remrun: child exited\n" if ($verbose);
+                $waitrv = waitpid($pid, WNOHANG);
+                if ($waitrv != $pid) {
+                    print STDERR "remrun: NOTICE: ", $ARGV[0], " closed ",
+                    "stdout but did not exit (killing it).\n";
+                    kill 'KILL', $pid;
+                    waitpid($pid, 0);     # we'll get it this time
+                }
+                if ($? & 0xff) {
+                    $exit_val = 1;
+                    if (!$master_eof && $waitrv == $pid) {
+                        $s = $signame[$? & 0x7f];
+                        print STDERR "remrun: NOTICE:  ", $ARGV[0], " died ",
+                            "with signal $s!\n";
+                        print STDERR "remrun: KILL could be due to running ",
+                        "out of memory (check system log)\n" if ($s eq 'KILL');
+                    }
+                } else {
+                    $exit_val = ($? >> 8);
+                }
+                printf "remrun: child exited, code $exit_val (%#x)\n", $?
+                    if ($verbose);
+                last;
+            }
+        }
+    }                                           # if ($nfound)
+
+    # check timeout
+    if ($master_eof && time > $master_timeout) {
+        if ($idkill) {
+            print "remrun: master EOF timeout -- killing child pid!\n" 
+                if ($verbose);
+            kill 'KILL', $pid;
+        } else {
+            print "remrun: master EOF timeout -- killing self, ouch!\n" 
+                if ($verbose);
+            kill 'KILL', -$mypgrp;                  # negative pid kills pgrp
+        }
+        exit(1);
+    }
+}
+
+print "remrun: DONE!\n" if ($verbose);
+exit($exit_val);

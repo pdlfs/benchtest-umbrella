@@ -1,0 +1,106 @@
+#!/usr/bin/env perl
+#
+# run_local_iperf.pl  run iperf/iperf3 on localhost
+# 24-Jul-2020  chuck@ece.cmu.edu
+#
+
+use strict;
+use Getopt::Long qw(:config require_order no_ignore_case);
+use Sys::Hostname;
+
+# get helpers using our script path to find the correct directory
+my($basename, $basedir);
+@_ = split("/", $0);
+$basename = pop(@_);
+$_ = ($#_ == -1) ? "." : join("/", @_);
+$basedir = $_;
+require "$_/helpers.pl";
+
+my($def_prefix) = '@CMAKE_INSTALL_PREFIX@';
+my($def_run) = 60;
+
+my($rv, $iperf, $niter, $outdir, $prefix, $runtime, $threads);
+
+# defaults
+$iperf = "iperf";
+$niter = 1;
+$outdir = ".";
+$prefix = $def_prefix;
+$runtime = $def_run;
+$threads = undef;
+
+$rv = GetOptions(
+                 'i|iperf=s'    => \$iperf,
+                 'n|niter=i'    => \$niter,
+                 'o|outdir=s'   => \$outdir,
+                 'p|prefix=s'   => \$prefix,
+                 'r|runtime=i'  => \$runtime,
+                 't|threads=i'  => \$threads,
+                );
+
+sub usage {
+    my($err) = @_;
+    print "$err\n\n" if (defined($err));
+    print "usage: $0 [options]\n";
+    print "where options are:\n";
+    print "\t-i / --iperf [s]     iperf binary in $prefix/bin to run\n";
+    print "\t-n / --niter [i]     number of iterations to run\n";
+    print "\t-o / --outdir [s]    output directory\n";
+    print "\t-p / --prefix [s]    prefix to find iperf bin in\n";
+    print "\t-r / --runtime [i]   run time in second (def=$def_run)\n";
+    print "\t-t / --threads [i]   number threads to run (def=1)\n";
+    print "\n";
+    exit(1);
+}
+
+die usage() if ($rv != 1 || $#ARGV >= 0);
+usage("bad iperf bin: $prefix/bin/$iperf") unless (-x "$prefix/bin/$iperf");
+usage("bad -n value") if ($niter < 1);
+usage("bad prefix") unless (-d $prefix);
+usage("bad runtime") if ($runtime < 1);
+usage("bad threads") if (defined($threads) && $threads < 1);
+
+unless (-d "$outdir") {
+    system("mkdir", "-p", $outdir) == 0 || die "mkdir $outdir failed";
+}
+
+#
+# echo back the settings for the log...
+#
+print "\ndoing local iperf run:\n";
+print "\tiperf = $iperf\n";
+print "\tniter = $niter\n";
+print "\toutdir = $outdir\n";
+print "\tprefix = $prefix\n";
+print "\truntime = $runtime\n";
+print "\tthreads = $threads\n" if ($threads);
+print "\n";
+
+#
+# loops to do it
+#
+my($hn, $iter, $myoutd, $myoutf, $scmd, $ccmd);
+
+$hn = hostname();
+$myoutd = "$outdir/$hn";
+system("mkdir", "-p", $myoutd) == 0 || die "mkdir $myoutd failed";
+for ($iter = 0 ; $iter < $niter ; $iter++) {
+    $myoutf = "$myoutd/$hn";
+
+    $scmd = "$prefix/bin/$iperf -s";
+    $scmd = $scmd . " -i 0" if ($iperf =~ /iperf3/);
+        
+    $ccmd = "$prefix/bin/$iperf -c $hn -t $runtime";
+    $ccmd = $ccmd . " -P $threads" if ($threads > 1);
+    $ccmd = $ccmd . " -i 0" if ($iperf =~/iperf3/);
+    $ccmd = $ccmd . " | tee -a $myoutf";
+    print "CMD: $ccmd\n";
+
+print "A\n";
+    cli_srvr($prefix, '', $ccmd, '', $scmd, $myoutf);
+print "B\n";
+}
+
+print "done!\n";
+
+exit(0);
