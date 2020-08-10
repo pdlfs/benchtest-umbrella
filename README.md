@@ -73,7 +73,7 @@ cd benchtest-umbrella/bootstrap/build
 
 # set $bootprefix to where you want install the bootstrap
 cmake -DUMBRELLA_BUILD_RDMALIBS=ON -DCMAKE_INSTALL_PREFIX=$bootprefix \
-    -DBOOTSTRAP=mvapich
+    -DBOOTSTRAP=mvapich ..
 # will build rdma-core and mvapich
 make -j
 
