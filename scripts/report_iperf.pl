@@ -57,7 +57,7 @@ print STDERR $#inputs+1, " input file(s) in input data sets\n";
 print STDERR "loading data\n";
 
 foreach $in (@inputs) {
-    my(@parts, $to, $from, @lns, $state, $is_iperf3, $threads);
+    my(@parts, $to, $from, @lns, $state, $is_iperf3, $streams);
     my($src, $dst, $bw, $u);
     @parts = split(/\//, $in);
     $to = pop(@parts);
@@ -73,7 +73,7 @@ foreach $in (@inputs) {
         if ($state eq 'start') {
             next unless (/^CMD: /);
             $is_iperf3 = (/iperf3 /) ? 1 : 0;
-            $threads = (/-P\s*\d+/) ? 1 : 0;
+            $streams = (/-P\s*\d+/) ? 1 : 0;
             $state = 'running';
             next;
         }
@@ -87,7 +87,7 @@ foreach $in (@inputs) {
 
         if ($state eq 'result') {
             next unless (/0\.0+-\d+\.\d+\s+sec\s+\S+\s+\S+\s+(\S+)\s+(\S+)/);
-            if ($threads) {
+            if ($streams) {
                 next unless(/SUM/);
             }
             $bw = $1;
