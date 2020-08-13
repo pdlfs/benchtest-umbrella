@@ -27,8 +27,8 @@ project (test-umbrella-scripts NONE)
 set (install-files helpers.pl)
 
 # executable scripts to install
-set (install-programs cbatch cmu_hostlist.pl cobalt_nodefile process_runner.pl
-     remrun report_iperf.pl report_runner.pl slurm_nodefile)
+set (install-programs cbatch cmu_hostlist.pl cobalt_nodefile do_math.pl
+     process_runner.pl remrun report_iperf.pl report_runner.pl slurm_nodefile)
 
 # executable scripts to @-expand and then install
 set (install-programs-in anl_do_combo_mercrunner.sh.in common.sh.in
