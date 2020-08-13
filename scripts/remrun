@@ -148,6 +148,11 @@ while (1) {
                 print "remrun: child exited\n" if ($verbose);
                 $waitrv = waitpid($pid, WNOHANG);
                 if ($waitrv != $pid) {
+                    # give it a 2nd chance before killing it
+                    sleep(1);
+                    $waitrv = waitpid($pid, WNOHANG);
+                }
+                if ($waitrv != $pid) {
                     print STDERR "remrun: NOTICE: ", $ARGV[0], " closed ",
                     "stdout but did not exit (killing it).\n";
                     kill 'KILL', $pid;
