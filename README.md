@@ -26,32 +26,33 @@ The main issue with bootstrapping is Infiniband/RDMA support.  If
 you do not need this, you can set NET_IB=OFF and not worry about
 bootstrapping.
 
-There are two issues related to Infiniband/RDMA:
+There are several issues related to Infiniband/RDMA:
 * does your system come with the rdma-core libs (e.g. libibverbs.so) installed?
-* do you have an MPI install that is built with rdma/verbs support? 
+* does your hardware have an alternate interface to ibverbs that is more efficient?
+* do you have an MPI install that is built with the transport you want?
 
-You need the rdma-core libs installed to perform rdma operations.
-Your MPI install must be linked to the rmda-core libs in order to
-use them.  The umbrella code assumes that you've got the version of
+You need the proper transport libs installed for optimal performance.
+Your MPI install must be linked to these libs in order to take advantage
+of them.  The umbrella code assumes that you've got the version of
 MPI that you want to use already installed.
 
-If your system has rmda-core libs installed and an RMDA-aware MPI
-linked to the rmda-core libs and installed, then you are good.
-If not, you may be able to use the system provided package manager
-(e.g. "apt" or "yum") to install rmda-core and an RDMA-aware MPI.
-Or you can use the umbrealla bootstrap to build and install rmda-core
-and MPI prior to building the main umbrella.
+If your system has the optimial transport libs installed and the
+provided MPI is linked to them, then you are good.  If not, you may
+be able to use the system provided package manager (e.g. "apt" or "yum")
+to install the libs and an MPI that uses them.  Or you can use the
+umbrealla bootstrap to build and install the libs and MPI prior to
+building the main umbrella.
 
 ## Using package manager
 
 (this is not complete)
 
-For UBUNTU, use apt to install:  librdmacm-dev, libibumad-dev, libibverbs-dev.
-UBUNTU doesn't have an MVAPICH package.  The OpenMPI package might use
-the rmda-core libs?
+For UBUNTU with libibverbs, use apt to install:  librdmacm-dev,
+libibumad-dev, libibverbs-dev.  UBUNTU doesn't have an MVAPICH package.
+The OpenMPI package might use the rmda-core libs?
 
-For CENTOS, use yum to install: librdmacm.x86_64, libibumad.x86_64,
-libibverbs.x86_64.   Also mvapich23.x86_64.
+For CENTOS with libibverbs, use yum to install: librdmacm.x86_64,
+libibumad.x86_64, libibverbs.x86_64.   Also mvapich23.x86_64.
 
 ## Building with the umbrella bootstrap
 
@@ -89,6 +90,9 @@ make -j
 The CENTOS7 Emulab image is similiar, except you need to use "cmake3"
 instead of "cmake" (use "yum install" to add it if isn't present).
 
+To build the bootstrap MPI using psm as an alternate interface,
+add "-DMVAPICH_DEVICE=ch3:psm" to the bootstrap cmake config (the
+default is to use ibverbs).
 
 Once installed, you will likely want to add $bootprefix/{bin,sbin} and
 $prefix/{bin,sbin} to your shell's path.
