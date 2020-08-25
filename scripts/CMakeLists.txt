@@ -34,7 +34,7 @@ set (install-programs cbatch cmu_hostlist.pl cobalt_nodefile do_math.pl
 # executable scripts to @-expand and then install
 set (install-programs-in anl_do_combo_mercrunner.sh.in common.sh.in
      lanl_do_combo_mercrunner.sh.in run_combo_mercury_runner.sh.in
-     run_iperf.pl.in run_local_iperf.pl.in run_perftest.pl.in)
+     run_iperf.pl.in run_local_iperf.pl.in run_osu_bm.sh.in run_perftest.pl.in)
 
 #
 # expand ${install-programs-in} and build a list of output files for install
