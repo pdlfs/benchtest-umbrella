@@ -1,0 +1,143 @@
+#!/usr/bin/env perl
+#
+# run_perftest.pl  run a perftest
+# 13-Aug-2020  chuck@ece.cmu.edu
+#
+
+use strict;
+use Getopt::Long qw(:config require_order no_ignore_case);
+
+# get helpers using our script path to find the correct directory
+my($basename, $basedir);
+@_ = split("/", $0);
+$basename = pop(@_);
+$_ = ($#_ == -1) ? "." : join("/", @_);
+$basedir = $_;
+require "$_/helpers.pl";
+
+my($def_mode) = "bw,lat";
+my($def_niter) = 1;
+my($def_prefix) = '@CMAKE_INSTALL_PREFIX@';
+my($def_runiter) = 5000;
+my($def_tests) = "atomic,read,send,write";
+
+my($rv, $mode, $niter, $outdir, $prefix, $runiter, $tests);
+
+$mode = $def_mode;
+$niter = $def_niter;
+$outdir = ".";
+$prefix = $def_prefix;
+$runiter = $def_runiter;
+$tests = $def_tests;
+
+$rv = GetOptions(
+                 'm|mode=s'     => \$mode,
+                 'n|niter=i'    => \$niter,
+                 'o|outdir=s'   => \$outdir,
+                 'p|prefix=s'   => \$prefix,
+                 'r|runiter=i'  => \$runiter,
+                 't|tests=s'    => \$tests,
+                );
+
+sub usage {
+    my($err) = @_;
+    print "$err\n\n" if (defined($err));
+    print "usage: $0 [options] hostfile\n";
+    print "where options are:\n";
+    print "\t-m / --mode [s]      mode (def=$def_mode)\n";
+    print "\t-n / --niter [i]     number of iterations to run\n";
+    print "\t-o / --outdir [s]    output directory\n";
+    print "\t-p / --prefix [s]    prefix to find iperf bin in\n";
+    print "\t-r / --runiter [i]   run iterations (def=$def_runiter)\n";
+    print "\t-t / --tests [s]     tests to run (def=$def_tests)\n";
+    print "\n";
+    print "hostfile is a CSV file with: vhost,node,vhost_exp,node_exp\n";
+    print "if hostfile is '-' we read it from stdin\n\n";
+    exit(1);
+}
+
+die usage() if ($rv != 1 || $#ARGV != 0);
+usage("bad -n value") if ($niter < 1);
+usage("bad prefix") unless (-d $prefix);
+usage("bad runiter") if ($runiter < 1);
+
+unless (-d "$outdir") {
+    system("mkdir", "-p", $outdir) == 0 || die "mkdir $outdir failed";
+}
+
+my(%tmp, @mds, @tsts);
+$mode =~ s/\s//g;
+$tests =~ s/\s//g;
+
+@_ = split(/,/, $mode);
+foreach (@_) {
+    $tmp{$_} = 1;
+    usage("bad mode $_") unless ($_ eq "bw" || $_ eq "lat");
+}
+@mds = sort keys %tmp;
+
+undef(%tmp);
+@_ = split(/,/, $tests);
+foreach (@_) {
+    $tmp{$_} = 1;
+    usage("bad test $_") unless ($_ eq "atomic" || $_ eq "read" ||
+                                 $_ eq "send" || $_ eq "write");
+}
+@tsts = sort keys %tmp;
+
+my(%hdb, $nodecnt);
+
+# load host CSV list into %hdb
+if (load_hostdb($ARGV[0], \%hdb) < 1) {
+    print "ERROR: no hosts detected\n";
+    exit(1);
+}
+$nodecnt = $hdb{'nodecnt'};
+
+#
+# echo back the settings for the log...
+#
+print "\ndoing perftests run:\n";
+print "\tnodecount = $nodecnt\n";
+print "\tmode = ", join(",", @mds), "\n";
+print "\tniter = $niter\n";
+print "\toutdir = $outdir\n";
+print "\tprefix = $prefix\n";
+print "\truniter = $runiter\n";
+print "\ttests = ", join(",", @tsts), "\n";
+print "\n";
+
+#
+# loops to do it
+#
+my($node, $myoutd, $t, $m, $iter, $remote, $myoutf, $scmd, $ccmd);
+
+for ($node = 0 ; $node < $nodecnt ; $node++) {
+    $myoutd = "$outdir/" . $hdb{'node_exp'}{$node};
+    system("mkdir", "-p", $myoutd) == 0 || die "mkdir $myoutd failed";
+    foreach $t (@tsts) {
+        foreach $m (@mds) {
+            for ($iter = 0 ; $iter < $niter ; $iter++) {
+                for ($remote = 0 ; $remote < $nodecnt ; $remote++) {
+                    next if ($remote == $node);
+                    $myoutf = "$myoutd/$t-$m-" . $hdb{'node_exp'}{$remote};
+
+                    $scmd = "$prefix/bin/ib_${t}_$m -n $runiter";
+            
+                    $ccmd = "$prefix/bin/ib_${t}_$m " .
+                            "--report_gbits -n $runiter " . 
+                             $hdb{'vhost_exp'}{$remote};
+                    $ccmd = $ccmd . " | tee -a $myoutf";
+                    print "CMD: $ccmd\n";
+
+                    cli_srvr($prefix, $hdb{'vhost'}{$node}, $ccmd,
+                             $hdb{'vhost'}{$remote}, $scmd, $myoutf);
+                }
+            }
+        }
+    }
+}
+
+print "done!\n";
+
+exit(0);

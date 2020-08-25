@@ -28,12 +28,13 @@ set (install-files helpers.pl)
 
 # executable scripts to install
 set (install-programs cbatch cmu_hostlist.pl cobalt_nodefile do_math.pl
-     process_runner.pl remrun report_iperf.pl report_runner.pl slurm_nodefile)
+     process_runner.pl remrun report_iperf.pl report_perftest.pl
+     report_runner.pl slurm_nodefile)
 
 # executable scripts to @-expand and then install
 set (install-programs-in anl_do_combo_mercrunner.sh.in common.sh.in
      lanl_do_combo_mercrunner.sh.in run_combo_mercury_runner.sh.in
-     run_iperf.pl.in  run_local_iperf.pl.in)
+     run_iperf.pl.in run_local_iperf.pl.in run_perftest.pl.in)
 
 #
 # expand ${install-programs-in} and build a list of output files for install
