@@ -109,7 +109,7 @@ umbrella_opt_default (CCI_TAG "3ab663e0")
 umbrella_opt_default (IPERF3_TAG "master")
 umbrella_opt_default (LIBNL_TAG "master")
 umbrella_opt_default (MERCURY_PROGRESSOR_TAG "89c47dc8") # Nov 2019
-umbrella_opt_default (MERCURY_RUNNER_TAG "86318e9b")  # Mar 2020
+umbrella_opt_default (MERCURY_RUNNER_TAG "ba7b2919")  # Aug 2020
 umbrella_opt_default (MERCURY_TAG "41caa143")         # Mar 2020
 umbrella_opt_default (NETPERF_TAG "master")
 umbrella_opt_default (NEXUS_RUNNER_TAG "40003c0d")    # Feb 2020
