@@ -16,9 +16,9 @@ if (NOT TARGET ch-placement)
 # umbrella option variables
 #
 umbrella_defineopt (CH_PLACEMENT_REPO
-     "http://xgitlab.cels.anl.gov/codes/ch-placement.git"
+     "https://github.com/mochi-hpc/mochi-ch-placement.git"
      STRING "ch-placement GIT repository")
-umbrella_defineopt (CH_PLACEMENT_TAG "master" STRING "ch-placement GIT tag")
+umbrella_defineopt (CH_PLACEMENT_TAG "main" STRING "ch-placement GIT tag")
 umbrella_defineopt (CH_PLACEMENT_TAR "ch-placement-${CH_PLACEMENT_TAG}.tar.gz"
      STRING "ch-placement cache tar file")
 
@@ -29,7 +29,7 @@ umbrella_download (CH_PLACEMENT_DOWNLOAD ch-placement ${CH_PLACEMENT_TAR}
                    GIT_REPOSITORY ${CH_PLACEMENT_REPO}
                    GIT_TAG ${CH_PLACEMENT_TAG})
 umbrella_patchcheck (CH_PLACEMENT_PATCHCMD ch-placement)
-umbrella_testcommand (CH_PLACEMENT_TESTCMD TEST_COMMAND make check)
+umbrella_testcommand(ch-placement CH_PLACEMENT_TESTCMD TEST_COMMAND make check)
 
 #
 # create ch-placement target
