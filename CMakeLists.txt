@@ -108,12 +108,12 @@ umbrella_opt_default (BMI_TAG "6ea0b78f")             # Jan 2020
 umbrella_opt_default (CCI_TAG "3ab663e0")
 umbrella_opt_default (IPERF3_TAG "master")
 umbrella_opt_default (LIBNL_TAG "master")
-umbrella_opt_default (MERCURY_PROGRESSOR_TAG "89c47dc8") # Nov 2019
-umbrella_opt_default (MERCURY_RUNNER_TAG "ba7b2919")  # Aug 2020
-umbrella_opt_default (MERCURY_TAG "41caa143")         # Mar 2020
+umbrella_opt_default (MERCURY_PROGRESSOR_TAG "6892c220") # Oct 2020
+umbrella_opt_default (MERCURY_RUNNER_TAG "cbe7a219")  # Apr 2021
+umbrella_opt_default (MERCURY_TAG "06a1bf33")         # Jun 2022
 umbrella_opt_default (NETPERF_TAG "master")
-umbrella_opt_default (NEXUS_RUNNER_TAG "40003c0d")    # Feb 2020
-umbrella_opt_default (OFI_TAG "a593d160")             # Jun 2019
+umbrella_opt_default (NEXUS_RUNNER_TAG "04ee7e8a")    # Apr 2021
+umbrella_opt_default (OFI_TAG "1a89deaa")             # Feb 2022
 umbrella_opt_default (OSU_MICRO_BENCHMARKS_REPO
           "https://github.com/pdlfs/osu-micro-benchmarks.git")
           # forces a load from git repo
