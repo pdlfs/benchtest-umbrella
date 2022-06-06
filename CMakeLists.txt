@@ -105,7 +105,6 @@ set (UMBRELLA_BUILD_RDMALIBS "${NET_IB_MKLIBS}"
 # set git tags to the versions we want to stick to by default...
 #
 umbrella_opt_default (BMI_TAG "6ea0b78f")             # Jan 2020
-umbrella_opt_default (CCI_TAG "3ab663e0")
 umbrella_opt_default (IPERF3_TAG "master")
 umbrella_opt_default (LIBNL_TAG "master")
 umbrella_opt_default (MERCURY_PROGRESSOR_TAG "6892c220") # Oct 2020
@@ -127,7 +126,7 @@ umbrella_opt_default (RDMA_CORE_TAG "master")
 
 # note: NA_INITIALLY_ON is only applied as the defaults the first time
 # you run cmake.  if you want to reconfigure, change MERCURY_BMI, et al.
-umbrella_opt_default (MERCURY_NA_INITIALLY_ON "bmi;cci;ofi;sm")
+umbrella_opt_default (MERCURY_NA_INITIALLY_ON "bmi;ofi;sm")
 
 # setup scripts cache
 set (my-scripts-cache "${UMBRELLA_CMAKECACHE}")
