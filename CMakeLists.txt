@@ -106,7 +106,7 @@ set (UMBRELLA_BUILD_RDMALIBS "${NET_IB_MKLIBS}"
 #
 umbrella_opt_default (BMI_TAG "6ea0b78f")             # Jan 2020
 umbrella_opt_default (IPERF3_TAG "master")
-umbrella_opt_default (LIBNL_TAG "master")
+umbrella_opt_default (LIBNL_TAG "main")
 umbrella_opt_default (MERCURY_PROGRESSOR_TAG "6892c220") # Oct 2020
 umbrella_opt_default (MERCURY_RUNNER_TAG "cbe7a219")  # Apr 2021
 umbrella_opt_default (MERCURY_TAG "06a1bf33")         # Jun 2022
