@@ -117,6 +117,7 @@ umbrella_opt_default (OSU_MICRO_BENCHMARKS_REPO
           "https://github.com/pdlfs/osu-micro-benchmarks.git")
           # forces a load from git repo
 umbrella_opt_default (OSU_MICRO_BENCHMARKS_TAG "v7.3")
+umbrella_opt_default (PDLFS_SCRIPTS_TAG "main")
 umbrella_opt_default (PERFTEST_TAG "master")
 umbrella_opt_default (RDMA_CORE_TAG "master")
 
@@ -128,11 +129,8 @@ umbrella_opt_default (RDMA_CORE_TAG "master")
 # you run cmake.  if you want to reconfigure, change MERCURY_BMI, et al.
 umbrella_opt_default (MERCURY_NA_INITIALLY_ON "bmi;ofi;sm")
 
-# setup scripts cache
-set (my-scripts-cache "${UMBRELLA_CMAKECACHE}")
-
 if (CPU)
-    # lmbench, etc?
+    # lmbench, stress ng, etc?
 endif ()
 
 if (NET)
@@ -159,16 +157,5 @@ if (PDL)
     include (umbrella/mercury-progressor)
     include (umbrella/mercury-runner)
     include (umbrella/nexus-runner)
+    include (umbrella/pdlfs-scripts)
 endif ()
-
-
-#
-# scripts -- live here in deltafs-umbrella
-#
-ExternalProject_Add (scripts
-    DOWNLOAD_COMMAND true    # no need to download, comes with umbrella
-    SOURCE_DIR ${CMAKE_SOURCE_DIR}/scripts
-    CMAKE_CACHE_ARGS "${my-scripts-cache}"
-
-    UPDATE_COMMAND ""
-)
