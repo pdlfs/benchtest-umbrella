@@ -104,19 +104,19 @@ set (UMBRELLA_BUILD_RDMALIBS "${NET_IB_MKLIBS}"
 #
 # set git tags to the versions we want to stick to by default...
 #
-umbrella_opt_default (BMI_TAG "6ea0b78f")             # Jan 2020
+umbrella_opt_default (BMI_TAG "main")
 umbrella_opt_default (IPERF3_TAG "master")
 umbrella_opt_default (LIBNL_TAG "main")
-umbrella_opt_default (MERCURY_PROGRESSOR_TAG "6892c220") # Oct 2020
-umbrella_opt_default (MERCURY_RUNNER_TAG "cbe7a219")  # Apr 2021
-umbrella_opt_default (MERCURY_TAG "06a1bf33")         # Jun 2022
+umbrella_opt_default (MERCURY_PROGRESSOR_TAG "master")
+umbrella_opt_default (MERCURY_RUNNER_TAG "master")
+umbrella_opt_default (MERCURY_TAG "master")
 umbrella_opt_default (NETPERF_TAG "master")
-umbrella_opt_default (NEXUS_RUNNER_TAG "04ee7e8a")    # Apr 2021
-umbrella_opt_default (OFI_TAG "1a89deaa")             # Feb 2022
+umbrella_opt_default (NEXUS_RUNNER_TAG "master")
+umbrella_opt_default (OFI_TAG "main")
 umbrella_opt_default (OSU_MICRO_BENCHMARKS_REPO
           "https://github.com/pdlfs/osu-micro-benchmarks.git")
           # forces a load from git repo
-umbrella_opt_default (OSU_MICRO_BENCHMARKS_TAG "v5.6.1")
+umbrella_opt_default (OSU_MICRO_BENCHMARKS_TAG "v7.3")
 umbrella_opt_default (PERFTEST_TAG "master")
 umbrella_opt_default (RDMA_CORE_TAG "master")
 
